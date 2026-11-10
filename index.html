@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkQR – Turn any link into a QR code</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+  --bg:#04060c; --card:#0a1020; --card2:#0e1730; --line:#1a2a52;
+  --text:#eaf1ff; --muted:#8fa3cf; --blue:#2f7bff; --cyan:#4cc9ff;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
+  background-image:radial-gradient(60rem 30rem at 15% -10%,rgba(47,123,255,.28),transparent 60%),
+  radial-gradient(40rem 30rem at 100% 10%,rgba(76,201,255,.14),transparent 60%)}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 20px 56px}
+header{text-align:center;margin-bottom:36px}
+.logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;color:var(--cyan);
+  background:rgba(47,123,255,.12);border:1px solid var(--line);padding:6px 14px;border-radius:999px;font-size:14px}
+h1{font-size:clamp(30px,6vw,52px);line-height:1.1;margin:18px 0 10px;letter-spacing:-1px}
+h1 span{background:linear-gradient(90deg,var(--blue),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);max-width:520px;margin:0 auto;font-size:17px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:22px;padding:26px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(47,123,255,.05) inset}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:0 0 8px}
+.field{position:relative;margin-bottom:22px}
+input[type=text]{width:100%;background:#050914;border:1.5px solid var(--line);color:var(--text);font-size:17px;
+  padding:16px 16px;border-radius:14px;outline:none;transition:.2s}
+input[type=text]:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(47,123,255,.2)}
+input.bad{border-color:#ff5d73;box-shadow:0 0 0 4px rgba(255,93,115,.15)}
+.hint{font-size:13px;color:var(--muted);margin-top:8px;min-height:20px}
+.hint.err{color:#ff8a9a}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1.5px solid var(--line);background:#050914;color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.2s;font-family:inherit}
+.chip:hover{border-color:var(--blue)}
+.chip[aria-pressed=true]{border-color:var(--blue);background:rgba(47,123,255,.18);box-shadow:0 0 18px rgba(47,123,255,.3)}
+.dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.3)}
+.btn{width:100%;border:0;cursor:pointer;font-size:17px;font-weight:700;color:#fff;padding:16px;border-radius:14px;font-family:inherit;
+  background:linear-gradient(90deg,var(--blue),#1b56d6);box-shadow:0 10px 30px rgba(47,123,255,.4);transition:.2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 36px rgba(47,123,255,.55)}
+.preview{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%}
+.frame{width:100%;max-width:300px;aspect-ratio:1;border-radius:20px;background:#fff;padding:12px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px var(--line),0 0 60px rgba(47,123,255,.35);overflow:hidden}
+.frame img{width:100%;height:100%;image-rendering:pixelated;display:block;border-radius:6px}
+.frame.empty{background:repeating-linear-gradient(45deg,#08102a,#08102a 10px,#0a1535 10px,#0a1535 20px);color:var(--muted);font-size:15px;padding:24px}
+.saveTip{margin-top:18px;color:var(--muted);font-size:14px;max-width:300px}
+.saveTip b{color:var(--cyan)}
+.dlrow{display:flex;gap:10px;margin-top:20px;width:100%;max-width:300px}
+.dlrow[hidden]{display:none}
+.dlbtn{flex:1;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:#fff;padding:12px;border-radius:12px;border:1.5px solid var(--blue);background:rgba(47,123,255,.18);transition:.2s}
+.dlbtn:hover{background:var(--blue);box-shadow:0 8px 24px rgba(47,123,255,.45)}
+.badge{margin-top:14px;font-size:12px;color:var(--cyan);background:rgba(76,201,255,.1);border:1px solid rgba(76,201,255,.25);padding:4px 12px;border-radius:999px;word-break:break-all;max-width:100%}
+h2{font-size:26px;margin:44px 0 18px;letter-spacing:-.5px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:820px){.steps{grid-template-columns:1fr}}
+.step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.num{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));margin-bottom:12px}
+.step h3{margin:0 0 6px;font-size:18px}
+.step p{margin:0;color:var(--muted);font-size:15px}
+.tips{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.tips{grid-template-columns:1fr}}
+.tips li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:12px;padding:14px 16px;color:var(--muted);font-size:15px}
+.tips b{color:var(--text)}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:44px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">▣ LinkQR</div>
+    <h1>Turn any link into a <span>scannable QR code</span></h1>
+    <p class="sub">Paste a link, get a crisp QR code instantly. Free, private, and everything happens right in your browser.</p>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-label="Generator">
+      <div class="field">
+        <label for="url">Your link</label>
+        <input type="text" id="url" placeholder="https://example.com" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url">
+        <div class="hint" id="hint">Type or paste a link. The QR code updates as you type.</div>
+      </div>
+
+      <div class="field">
+        <label>Code color</label>
+        <div class="chips" id="colors">
+          <button class="chip" data-c="#000000" aria-pressed="true"><span class="dot" style="background:#000"></span>Black</button>
+          <button class="chip" data-c="#0b3aa8" aria-pressed="false"><span class="dot" style="background:#0b3aa8"></span>Royal blue</button>
+          <button class="chip" data-c="#071a4d" aria-pressed="false"><span class="dot" style="background:#071a4d"></span>Midnight</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Error correction</label>
+        <div class="chips" id="levels">
+          <button class="chip" data-l="L" aria-pressed="false">Low</button>
+          <button class="chip" data-l="M" aria-pressed="true">Medium</button>
+          <button class="chip" data-l="Q" aria-pressed="false">High</button>
+        </div>
+      </div>
+
+      <button class="btn" id="go">Generate QR code</button>
+    </section>
+
+    <section class="card preview" aria-live="polite">
+      <div class="frame empty" id="frame">Your QR code will appear here</div>
+      <div class="badge" id="badge" hidden></div>
+      <div class="dlrow" id="dl" hidden><button class="dlbtn" id="dlpng">⬇ PNG</button><button class="dlbtn" id="dlsvg">⬇ SVG</button></div>
+      <p class="saveTip" id="tip" hidden><b>Save it:</b> right-click (or long-press on a phone) the image and choose “Save image”.</p>
+    </section>
+  </div>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h3>Paste your link</h3><p>Copy any web address and paste it in the box. If you leave out “https://”, we’ll add it for you.</p></div>
+    <div class="step"><div class="num">2</div><h3>Customize</h3><p>Pick a color and an error-correction level. Higher levels stay scannable even if the code is slightly damaged.</p></div>
+    <div class="step"><div class="num">3</div><h3>Scan or save</h3><p>Point your phone camera at the code to test it, then save the image to print or share.</p></div>
+  </div>
+
+  <h2>Tips for a great scan</h2>
+  <ul class="tips">
+    <li><b>Keep strong contrast.</b> Dark code on a light background scans best, so we always use a white backdrop.</li>
+    <li><b>Print it big enough.</b> Aim for at least 2 × 2 cm (about 1 inch) for reliable scanning.</li>
+    <li><b>Shorter links are simpler.</b> Fewer characters make a cleaner, easier-to-scan code.</li>
+    <li><b>Always test it.</b> Scan with your phone before printing or publishing.</li>
+  </ul>
+
+  <footer>Your links never leave your device. Nothing is uploaded or stored.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  var input=document.getElementById('url'), hint=document.getElementById('hint'),
+      frame=document.getElementById('frame'), badge=document.getElementById('badge'),
+      tip=document.getElementById('tip'), dl=document.getElementById('dl'), color='#000000', level='M', timer,
+      downloads=null, lastCanvas=null, lastSvg='';
+  function sync(){ dl.hidden=!(downloads&&lastCanvas); }
+
+  function normalize(v){
+    v=v.trim();
+    if(!v) return '';
+    if(!/^[a-z][a-z0-9+.-]*:/i.test(v)) v='https://'+v;
+    return v;
+  }
+  function valid(v){
+    try{ var u=new URL(v); return /^(https?|mailto|tel):/i.test(u.protocol) && (u.protocol!=='http:'&&u.protocol!=='https:' || u.hostname.indexOf('.')>0); }
+    catch(e){ return false; }
+  }
+  function reset(msg,err){
+    frame.className='frame empty'; frame.textContent='Your QR code will appear here';
+    badge.hidden=true; tip.hidden=true; lastCanvas=null; sync();
+    hint.textContent=msg; hint.className='hint'+(err?' err':'');
+    input.classList.toggle('bad',!!err);
+  }
+  function render(){
+    var raw=input.value, text=normalize(raw);
+    if(!text){ reset('Type or paste a link. The QR code updates as you type.',false); return; }
+    if(!valid(text)){ reset('That doesn’t look like a valid link yet.',true); return; }
+    try{
+      var qr=qrcode(0,level); qr.addData(text); qr.make();
+      var n=qr.getModuleCount(), q=4, px=16, size=(n+q*2)*px;
+      var c=document.createElement('canvas'); c.width=c.height=size;
+      var x=c.getContext('2d');
+      x.fillStyle='#ffffff'; x.fillRect(0,0,size,size);
+      x.fillStyle=color;
+      for(var r=0;r<n;r++) for(var k=0;k<n;k++) if(qr.isDark(r,k)) x.fillRect((k+q)*px,(r+q)*px,px,px);
+      frame.className='frame'; frame.innerHTML='';
+      var img=new Image(); img.alt='QR code for '+text; img.src=c.toDataURL('image/png');
+      frame.appendChild(img);
+      badge.textContent=text; badge.hidden=false; tip.hidden=false;
+      var p='',rr,kk; for(rr=0;rr<n;rr++)for(kk=0;kk<n;kk++)if(qr.isDark(rr,kk))p+='M'+(kk+q)+' '+(rr+q)+'h1v1h-1z';
+      lastSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(n+q*2)+' '+(n+q*2)+'" width="1024" height="1024" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path fill="'+color+'" d="'+p+'"/></svg>';
+      lastCanvas=c; sync();
+      hint.textContent='Looking good. Scan it with your phone camera to test.'; hint.className='hint';
+      input.classList.remove('bad');
+    }catch(e){
+      reset('That link is too long to fit. Try a shorter one or lower the error correction.',true);
+    }
+  }
+  function schedule(){ clearTimeout(timer); timer=setTimeout(render,200); }
+  function bindChips(id,fn){
+    var box=document.getElementById(id);
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('.chip'); if(!b) return;
+      [].forEach.call(box.children,function(s){s.setAttribute('aria-pressed',s===b?'true':'false');});
+      fn(b); render();
+    });
+  }
+  bindChips('colors',function(b){color=b.dataset.c;});
+  bindChips('levels',function(b){level=b.dataset.l;});
+  function save(name,data){
+    if(!downloads) return;
+    downloads.save({filename:name,data:data}).catch(function(e){
+      if(e&&e.code==='declined') return;
+      hint.textContent='Couldn’t start the download. Right-click the code and choose “Save image” instead.'; hint.className='hint err';
+    });
+  }
+  document.getElementById('dlpng').addEventListener('click',function(){
+    if(lastCanvas) lastCanvas.toBlob(function(b){ if(b) save('linkqr-code.png',b); },'image/png');
+  });
+  document.getElementById('dlsvg').addEventListener('click',function(){ if(lastSvg) save('linkqr-code.svg',lastSvg); });
+  try{
+    if(window.claude&&window.claude.use) window.claude.use('downloads').then(function(d){ downloads=d||null; sync(); }).catch(function(){});
+  }catch(e){}
+  input.addEventListener('input',schedule);
+  document.getElementById('go').addEventListener('click',render);
+  input.addEventListener('keydown',function(e){ if(e.key==='Enter') render(); });
+})();
+</script>
+</body>
+</html>
